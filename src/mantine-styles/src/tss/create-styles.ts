@@ -10,11 +10,11 @@ import { mergeClassNames } from './utils/merge-class-names/merge-class-names';
 
 type ContextStyles = ReturnType<typeof useMantineProviderStyles>;
 
-export interface UseStylesOptions<Key extends string> {
+export interface UseStylesOptions<Key extends string, Params extends Record<string, any> = never> {
   classNames?: Partial<Record<Key, string>>;
   styles?:
     | Partial<Record<Key, CSSObject>>
-    | ((theme: MantineTheme, params: Record<string, any>) => Partial<Record<Key, CSSObject>>);
+    | ((theme: MantineTheme, params: Params) => Partial<Record<Key, CSSObject>>);
   name: string | string[];
   unstyled?: boolean;
 }
@@ -23,13 +23,13 @@ function createRef(refName: string) {
   return `__mantine-ref-${refName || ''}`;
 }
 
-function getStyles<Key extends string>(
-  styles: UseStylesOptions<Key>['styles'] | ContextStyles,
+function getStyles<Key extends string, Params extends Record<string, any> = never>(
+  styles: UseStylesOptions<Key, Params>['styles'] | ContextStyles,
   theme: MantineTheme,
-  params: Record<string, any>
+  params: Params = {} as Params
 ): CSSObject {
-  const extractStyles = (stylesPartial: UseStylesOptions<Key>['styles']) =>
-    typeof stylesPartial === 'function' ? stylesPartial(theme, params || {}) : stylesPartial || {};
+  const extractStyles = (stylesPartial: UseStylesOptions<Key, Params>['styles']) =>
+    typeof stylesPartial === 'function' ? stylesPartial(theme, params) : stylesPartial || {};
 
   if (Array.isArray(styles)) {
     return styles
@@ -49,7 +49,7 @@ function getStyles<Key extends string>(
   return extractStyles(styles);
 }
 
-export function createStyles<Key extends string = string, Params = void>(
+export function createStyles<Key extends string, Params extends Record<string, any>>(
   input:
     | ((
         theme: MantineTheme,
@@ -60,7 +60,7 @@ export function createStyles<Key extends string = string, Params = void>(
 ) {
   const getCssObject = typeof input === 'function' ? input : () => input;
 
-  function useStyles(params: Params, options?: UseStylesOptions<Key>) {
+  function useStyles(params: Params, options?: UseStylesOptions<Key, Params>) {
     const theme = useMantineTheme();
     const context = useMantineProviderStyles(options?.name);
     const cache = useMantineEmotionCache();
